@@ -1,0 +1,77 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  id_usuario      Int      @id @default(autoincrement())
+  name            String
+  senha           String
+  email           String   @unique
+  data_nasc       DateTime
+  criado_em       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  tipo            String
+  telefone        String
+  avaliacao_media Float
+
+  motorista  Motorista?  @relation("UsuarioMotorista")
+  passageiro Passageiro? @relation("UsuarioPassageiro")
+}
+
+model Motorista {
+  id              Int               @id
+  cnh             String            @unique
+  veiculo_placa   String            @unique
+  veiculo_modelo  String
+  veiculo_marca   String
+  corridas        Corrida[]
+  Corrida_privada Corrida_privada[]
+
+  usuario Usuario @relation("UsuarioMotorista", fields: [id], references: [id_usuario])
+}
+
+model Corrida {
+  id_corrida    Int          @id @default(autoincrement())
+  id_passageiro Int
+  id_motorista  Int
+  origem        String
+  destino       String
+  status        Boolean      @default(true)
+  preco         Float
+  hora_saida    DateTime
+  n_vagas       Int
+  passageiros   Passageiro[]
+
+  motorista Motorista @relation(fields: [id_motorista], references: [id])
+}
+
+model Corrida_privada {
+  id_corrida_privada Int          @id @default(autoincrement())
+  id_motorista       Int
+  status             Boolean      @default(true)
+  n_vagas            Int
+  passageiros        Passageiro[]
+
+  motorista Motorista @relation(fields: [id_motorista], references: [id])
+}
+
+model Passageiro {
+  id               Int             @id
+  corridaId        Int
+  corridaPrivadaId Int
+  usuario          Usuario         @relation("UsuarioPassageiro", fields: [id], references: [id_usuario])
+  corrida          Corrida         @relation(fields: [corridaId], references: [id_corrida])
+  corrida_privada  Corrida_privada @relation(fields: [corridaPrivadaId], references: [id_corrida_privada])
+}
