@@ -6,7 +6,6 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/prisma"
 }
 
 datasource db {
@@ -43,16 +42,15 @@ model Motorista {
 }
 
 model Corrida {
-  id_corrida    Int          @id @default(autoincrement())
-  id_passageiro Int
-  id_motorista  Int
-  origem        String
-  destino       String
-  status        Boolean      @default(true)
-  preco         Float
-  hora_saida    DateTime
-  n_vagas       Int
-  passageiros   Passageiro[]
+  id_corrida   Int          @id @default(autoincrement())
+  id_motorista Int
+  origem       String
+  destino      String
+  status       Boolean      @default(true)
+  preco        Float
+  hora_saida   DateTime
+  n_vagas      Int
+  passageiros  Passageiro[]
 
   motorista Motorista @relation(fields: [id_motorista], references: [id])
 }
