@@ -1,3 +1,4 @@
+import { hash } from "bcryptjs";
 import { prisma } from "../../lib/prisma";
 import { FastifyRequest, FastifyReply } from "fastify";
 import { z } from "zod";
@@ -14,11 +15,13 @@ export async function createMotorista(request: FastifyRequest, reply: FastifyRep
 
   const { nome, senha, email, dataNasc, telefone, cnh } = createMotoristaSchema.parse(request.body);
 
+   const password_hash = await hash(senha, 6)
+
   try {
     const motoristaCriado = await prisma.usuario.create({
       data: {
         nome,
-        senha,
+        senha: password_hash,
         email,
         telefone,
         dataNasc,
