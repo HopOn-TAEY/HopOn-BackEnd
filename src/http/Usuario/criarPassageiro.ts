@@ -1,3 +1,4 @@
+import { hash } from "bcryptjs";
 import { prisma } from "../../lib/prisma";
 import { FastifyRequest, FastifyReply } from "fastify";
 import { z } from "zod";
@@ -13,11 +14,13 @@ export async function createPassageiro(request: FastifyRequest, reply: FastifyRe
 
   const { nome, senha, email, dataNasc, telefone } = createPassageiroSchema.parse(request.body);
 
+  const password_hash = await hash(senha, 6);
+
   try {
     const passageiroCriado = await prisma.usuario.create({
       data: {
         nome,
-        senha,
+        senha: password_hash,
         email,
         telefone,
         dataNasc,
@@ -29,20 +32,11 @@ export async function createPassageiro(request: FastifyRequest, reply: FastifyRe
 
     return reply.status(201).send({
       message: 'Passageiro criado com sucesso',
-      passageiro: {
-        id: passageiroCriado.id,
-        nome: passageiroCriado.nome,
-        email: passageiroCriado.email,
-        telefone: passageiroCriado.telefone,
-        dataNasc: passageiroCriado.dataNasc,
-        tipo: passageiroCriado.tipo,
-        criadoEm: passageiroCriado.criadoEm,
-      },
+      passageiroCriado
     });
   } catch (error: any) {
     console.error(error);
     
-    // Verificar se é erro de duplicação de email ou telefone
     if (error.code === 'P2002') {
       const field = error.meta?.target?.[0];
       if (field === 'email') {

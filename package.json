@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "ts-node-dev --exit-child --transpile-only src/server.ts",
+    "dev": "tsx watch src/server.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -22,30 +22,16 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
-<<<<<<< HEAD
-<<<<<<< Updated upstream
-    "@prisma/client": "^6.9.0",
-    "express": "^5.1.0"
-=======
     "@fastify/cookie": "^11.0.2",
     "@fastify/jwt": "^9.1.0",
     "@fastify/session": "^11.1.0",
     "@prisma/client": "^6.9.0",
     "@types/jsonwebtoken": "^9.0.10",
+    "bcryptjs": "^3.0.2",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
     "fastify": "^5.4.0",
     "jsonwebtoken": "^9.0.2",
     "zod": "^3.25.63"
->>>>>>> Stashed changes
-=======
-    "@fastify/cookie": "^11.0.2",
-    "@fastify/session": "^11.1.0",
-    "@prisma/client": "^6.9.0",
-    "dotenv": "^16.5.0",
-    "express": "^5.1.0",
-    "fastify": "^5.4.0",
-    "zod": "^3.25.63"
->>>>>>> fix
   }
 }
