@@ -1,6 +1,11 @@
 import { FastifyRequest, FastifyReply } from "fastify";
 import { prisma } from "../../lib/prisma";
 import { z } from "zod";
+<<<<<<< HEAD
+=======
+import '@fastify/session';
+import 'fastify';
+>>>>>>> fix
 
 export async function login(request: FastifyRequest, reply: FastifyReply) {
   const bodySchema = z.object({
@@ -8,6 +13,10 @@ export async function login(request: FastifyRequest, reply: FastifyReply) {
     senha: z.string()
   })
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> fix
     const { email, senha } = bodySchema.parse(request.body);
     
     const usuario = await prisma.usuario.findUnique({
@@ -18,6 +27,7 @@ export async function login(request: FastifyRequest, reply: FastifyReply) {
         return reply.status(401).send({error: "Credenciais inválidas"});
     }
 
+<<<<<<< HEAD
     const token = reply.jwtSign({
       id_usuario: usuario.id,
       email: usuario.email,
@@ -36,4 +46,12 @@ export async function login(request: FastifyRequest, reply: FastifyReply) {
         tipo: usuario.tipo
       }
     });
+=======
+    (request.session as any) = {
+      id_usuario: usuario.id_usuario,
+      email: usuario.email,
+    };
+
+  return reply.send({ message: "Login realizado com sucesso" });
+>>>>>>> fix
 }
