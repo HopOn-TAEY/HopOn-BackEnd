@@ -13,12 +13,9 @@ export async function createMotorista(request: FastifyRequest, reply: FastifyRep
         avaliacao_media: z.number(),
 
         cnh: z.string(),
-        veiculo_placa: z.string(),
-        veiculo_modelo: z.string(),
-        veiculo_marca: z.string()
     });
 
-    const {name, senha, email, data_nasc, tipo, telefone, avaliacao_media, cnh, veiculo_placa, veiculo_modelo, veiculo_marca} = createTaskBodySchema.parse(request.body)
+    const {name, senha, email, data_nasc, tipo, telefone, avaliacao_media, cnh} = createTaskBodySchema.parse(request.body)
 
 
     const task = await prisma.usuario.create({
@@ -32,10 +29,7 @@ export async function createMotorista(request: FastifyRequest, reply: FastifyRep
             avaliacao_media,
             motorista: {
                 create: {
-                    cnh,
-                    veiculo_placa,
-                    veiculo_modelo,
-                    veiculo_marca
+                    cnh
                 }
             }
         },

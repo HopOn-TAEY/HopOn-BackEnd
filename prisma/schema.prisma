@@ -22,7 +22,7 @@ model Usuario {
   criado_em       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   tipo            String
-  telefone        String
+  telefone        String   @unique
   avaliacao_media Float
 
   motorista  Motorista?  @relation("UsuarioMotorista")
@@ -32,9 +32,8 @@ model Usuario {
 model Motorista {
   id              Int               @id
   cnh             String            @unique
-  veiculo_placa   String            @unique
-  veiculo_modelo  String
-  veiculo_marca   String
+  
+  veiculos        Veiculo[]
   corridas        Corrida[]
   Corrida_privada Corrida_privada[]
 
@@ -72,4 +71,15 @@ model Passageiro {
   usuario          Usuario         @relation("UsuarioPassageiro", fields: [id], references: [id_usuario])
   corrida          Corrida         @relation(fields: [corridaId], references: [id_corrida])
   corrida_privada  Corrida_privada @relation(fields: [corridaPrivadaId], references: [id_corrida_privada])
+}
+
+model Veiculo {
+  veiculo_marca             String
+  veiculo_placa             String  @unique
+  veiculo_modelo            String
+  id_motorista              Int
+  suporteCrianças           Boolean @default(false)
+  suportePessoasDeficientes Boolean @default(false)
+
+  dono Motorista @relation(fields: [id_motorista], references: [id])
 }
