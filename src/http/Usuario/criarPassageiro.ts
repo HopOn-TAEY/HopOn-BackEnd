@@ -25,8 +25,6 @@ export async function createPassageiro(request: FastifyRequest, reply: FastifyRe
         telefone,
         dataNasc,
         tipo: "PASSAGEIRO",
-        avaliacaoMedia: 0,
-        totalAvaliacoes: 0,
       },
     });
 

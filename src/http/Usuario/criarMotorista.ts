@@ -26,8 +26,6 @@ export async function createMotorista(request: FastifyRequest, reply: FastifyRep
         telefone,
         dataNasc,
         tipo: "MOTORISTA",
-        avaliacaoMedia: 0,
-        totalAvaliacoes: 0,
         perfilMotorista: {
           create: {
             cnh,
