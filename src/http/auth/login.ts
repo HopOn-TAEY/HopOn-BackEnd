@@ -1,7 +1,7 @@
 import { FastifyRequest, FastifyReply } from "fastify";
 import { prisma } from "../../lib/prisma";
 import { z } from "zod";
-import { compare } from "bcryptjs"
+import { compare } from "bcryptjs";
 
 export async function login(request: FastifyRequest, reply: FastifyReply) {
     const bodySchema = z.object({
@@ -29,7 +29,9 @@ export async function login(request: FastifyRequest, reply: FastifyReply) {
 
       const token = await reply.jwtSign(
       {
-        id: usuario.id
+        id_usuario: usuario.id,
+        email: usuario.email,
+        tipo: usuario.tipo
       },
       {
         sign: {

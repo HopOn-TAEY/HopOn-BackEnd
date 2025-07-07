@@ -7,7 +7,248 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Enums para maior type safety e clareza
+model Usuario {
+  id                  String              @id @default(cuid())
+  nome                String
+  email               String              @unique
+  senha               String
+  telefone            String              @unique
+  dataNasc            DateTime
+  tipo                TipoUsuario
+  criadoEm            DateTime            @default(now())
+  atualizadoEm        DateTime            @updatedAt
+  avaliacoesRecebidas Avaliacao[]         @relation("AvaliadoAvaliacoes")
+  avaliacoesFeitas    Avaliacao[]         @relation("AvaliadorAvaliacoes")
+  corridasPrivadas    CorridaPrivada[]    @relation("PassageiroCorridasPrivadas")
+  perfilMotorista     PerfilMotorista?
+  reservasFeitas      Reserva[]           @relation("PassageiroReservas")
+  solicitacoesFeitas  SolicitacaoViagem[] @relation("PassageiroSolicitacoes")
+
+  @@map("usuarios")
+}
+
+model PerfilMotorista {
+  id               String                @id @default(cuid())
+  usuarioId        String                @unique
+  cnh              String                @unique
+  criadoEm         DateTime              @default(now())
+  atualizadoEm     DateTime              @updatedAt
+  avaliacaoMedia   Float?                @default(0)
+  totalAvaliacoes  Int                   @default(0)
+  corridas         Corrida[]
+  corridasPrivadas CorridaPrivada[]
+  usuario          Usuario               @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  propostas        PropostaSolicitacao[]
+  veiculos         Veiculo[]
+
+  @@map("perfis_motoristas")
+}
+
+model Veiculo {
+  id                 String                @id @default(cuid())
+  motoristaId        String
+  placa              String                @unique
+  marca              String
+  modelo             String
+  ano                Int
+  cor                String
+  capacidade         Int
+  criadoEm           DateTime              @default(now())
+  suporteCriancas    Boolean               @default(false)
+  suporteDeficientes Boolean               @default(false)
+  atualizadoEm       DateTime              @updatedAt
+  imagemPrincipal    String?
+  corridas           Corrida[]
+  corridasPrivadas   CorridaPrivada[]
+  imagens            ImagemVeiculo[]
+  propostas          PropostaSolicitacao[]
+  motorista          PerfilMotorista       @relation(fields: [motoristaId], references: [id], onDelete: Cascade)
+
+  @@map("veiculos")
+}
+
+model ImagemVeiculo {
+  id        String            @id @default(cuid())
+  veiculoId String
+  url       String
+  tipo      TipoImagemVeiculo @default(SECUNDARIA)
+  ordem     Int               @default(0)
+  criadoEm  DateTime          @default(now())
+  veiculo   Veiculo           @relation(fields: [veiculoId], references: [id], onDelete: Cascade)
+
+  @@map("imagens_veiculos")
+}
+
+model Corrida {
+  id                String             @id @default(cuid())
+  motoristaId       String
+  veiculoId         String
+  origem            String
+  destino           String
+  latitudeOrigem    Float?
+  longitudeOrigem   Float?
+  latitudeDestino   Float?
+  longitudeDestino  Float?
+  dataHoraSaida     DateTime
+  dataHoraChegada   DateTime?
+  numeroVagas       Int
+  vagasOcupadas     Int                @default(0)
+  observacoes       String?
+  status            StatusCorrida      @default(AGENDADA)
+  tipo              TipoCorrida
+  criadoEm          DateTime           @default(now())
+  atualizadoEm      DateTime           @updatedAt
+  preco             Float?
+  avaliacoes        Avaliacao[]
+  motorista         PerfilMotorista    @relation(fields: [motoristaId], references: [id])
+  veiculo           Veiculo            @relation(fields: [veiculoId], references: [id])
+  corridaRecorrente CorridaRecorrente?
+  reservas          Reserva[]
+
+  @@map("corridas")
+}
+
+model CorridaPrivada {
+  id               String          @id @default(cuid())
+  motoristaId      String
+  veiculoId        String
+  passageiroId     String
+  origem           String
+  destino          String
+  latitudeOrigem   Float?
+  longitudeOrigem  Float?
+  latitudeDestino  Float?
+  longitudeDestino Float?
+  dataHoraSaida    DateTime
+  dataHoraChegada  DateTime?
+  numeroVagas      Int
+  vagasOcupadas    Int             @default(0)
+  preco            Float?
+  observacoes      String?
+  status           StatusCorrida   @default(AGENDADA)
+  criadoEm         DateTime        @default(now())
+  atualizadoEm     DateTime        @updatedAt
+  motorista        PerfilMotorista @relation(fields: [motoristaId], references: [id])
+  passageiro       Usuario         @relation("PassageiroCorridasPrivadas", fields: [passageiroId], references: [id], onDelete: Cascade)
+  veiculo          Veiculo         @relation(fields: [veiculoId], references: [id])
+
+  @@map("corridas_privadas")
+}
+
+model CorridaRecorrente {
+  id           String      @id @default(cuid())
+  corridaId    String      @unique
+  diasSemana   DiaSemana[]
+  dataInicio   DateTime
+  dataFim      DateTime?
+  ativa        Boolean     @default(true)
+  criadoEm     DateTime    @default(now())
+  atualizadoEm DateTime    @updatedAt
+  corrida      Corrida     @relation(fields: [corridaId], references: [id], onDelete: Cascade)
+
+  @@map("corridas_recorrentes")
+}
+
+model Reserva {
+  id             String        @id @default(cuid())
+  corridaId      String
+  passageiroId   String
+  status         StatusReserva @default(PENDENTE)
+  numeroAssentos Int           @default(1)
+  observacoes    String?
+  criadoEm       DateTime      @default(now())
+  atualizadoEm   DateTime      @updatedAt
+  corrida        Corrida       @relation(fields: [corridaId], references: [id], onDelete: Cascade)
+  passageiro     Usuario       @relation("PassageiroReservas", fields: [passageiroId], references: [id], onDelete: Cascade)
+
+  @@unique([corridaId, passageiroId])
+  @@map("reservas")
+}
+
+model Avaliacao {
+  id          String   @id @default(cuid())
+  corridaId   String
+  avaliadorId String
+  avaliadoId  String
+  nota        Int
+  comentario  String?
+  criadoEm    DateTime @default(now())
+  avaliado    Usuario  @relation("AvaliadoAvaliacoes", fields: [avaliadoId], references: [id], onDelete: Cascade)
+  avaliador   Usuario  @relation("AvaliadorAvaliacoes", fields: [avaliadorId], references: [id], onDelete: Cascade)
+  corrida     Corrida  @relation(fields: [corridaId], references: [id], onDelete: Cascade)
+
+  @@unique([corridaId, avaliadorId, avaliadoId])
+  @@map("avaliacoes")
+}
+
+model Localidade {
+  id        String   @id @default(cuid())
+  nome      String
+  endereco  String
+  cidade    String
+  estado    String
+  cep       String?
+  latitude  Float?
+  longitude Float?
+  ativa     Boolean  @default(true)
+  criadoEm  DateTime @default(now())
+
+  @@map("localidades")
+}
+
+model Notificacao {
+  id        String   @id @default(cuid())
+  usuarioId String
+  titulo    String
+  mensagem  String
+  lida      Boolean  @default(false)
+  tipo      String
+  criadoEm  DateTime @default(now())
+
+  @@map("notificacoes")
+}
+
+model SolicitacaoViagem {
+  id                String                @id @default(cuid())
+  passageiroId      String
+  origem            String
+  destino           String
+  latitudeOrigem    Float?
+  longitudeOrigem   Float?
+  latitudeDestino   Float?
+  longitudeDestino  Float?
+  dataHoraSaida     DateTime
+  numeroPassageiros Int                   @default(1)
+  descricao         String?
+  status            StatusSolicitacao     @default(ABERTA)
+  dataExpiracao     DateTime?
+  criadoEm          DateTime              @default(now())
+  atualizadoEm      DateTime              @updatedAt
+  precoMaximo       Float?
+  propostas         PropostaSolicitacao[]
+  passageiro        Usuario               @relation("PassageiroSolicitacoes", fields: [passageiroId], references: [id], onDelete: Cascade)
+
+  @@map("solicitacoes_viagem")
+}
+
+model PropostaSolicitacao {
+  id            String            @id @default(cuid())
+  solicitacaoId String
+  motoristaId   String
+  veiculoId     String
+  observacoes   String?
+  aceita        Boolean?
+  criadoEm      DateTime          @default(now())
+  atualizadoEm  DateTime          @updatedAt
+  precoOfertado Float?
+  motorista     PerfilMotorista   @relation(fields: [motoristaId], references: [id], onDelete: Cascade)
+  solicitacao   SolicitacaoViagem @relation(fields: [solicitacaoId], references: [id], onDelete: Cascade)
+  veiculo       Veiculo           @relation(fields: [veiculoId], references: [id])
+
+  @@unique([solicitacaoId, motoristaId])
+  @@map("propostas_solicitacao")
+}
+
 enum TipoUsuario {
   MOTORISTA
   PASSAGEIRO
@@ -46,233 +287,11 @@ enum StatusSolicitacao {
   ABERTA
   ACEITA
   RECUSADA
-  EXPIRADA
   CANCELADA
+  EXPIRADA
 }
 
-// Tabela principal de usuários
-model Usuario {
-  id          String      @id @default(cuid())
-  nome        String
-  email       String      @unique
-  senha       String
-  telefone    String      @unique
-  dataNasc    DateTime
-  tipo        TipoUsuario
-  criadoEm    DateTime    @default(now())
-  atualizadoEm DateTime   @updatedAt
-
-  // Relacionamentos
-  perfilMotorista     PerfilMotorista?
-  reservasFeitas      Reserva[]        @relation("PassageiroReservas")
-  avaliacoesFeitas    Avaliacao[]      @relation("AvaliadorAvaliacoes")
-  avaliacoesRecebidas Avaliacao[]      @relation("AvaliadoAvaliacoes")
-  solicitacoesFeitas  SolicitacaoViagem[] @relation("PassageiroSolicitacoes")
-
-  @@map("usuarios")
+enum TipoImagemVeiculo {
+  PRINCIPAL
+  SECUNDARIA
 }
-
-// Perfil específico do motorista
-model PerfilMotorista {
-  id               String   @id @default(cuid())
-  usuarioId        String   @unique
-  cnh              String   @unique
-  avaliacaoMedia   Float?   @default(0)
-  totalAvaliacoes  Int      @default(0)
-  criadoEm         DateTime @default(now())
-  atualizadoEm     DateTime @updatedAt
-
-  // Relacionamentos
-  usuario   Usuario    @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
-  veiculos  Veiculo[]
-  corridas  Corrida[]
-  propostas PropostaSolicitacao[]
-
-  @@map("perfis_motoristas")
-}
-
-// Tabela de veículos (um motorista pode ter múltiplos veículos)
-model Veiculo {
-  id              String   @id @default(cuid())
-  motoristaId     String
-  placa           String   @unique
-  marca           String
-  modelo          String
-  ano             Int
-  cor             String
-  capacidade      Int
-  criadoEm        DateTime @default(now())
-  suporteCriancas Boolean  @default(false)
-  suporteDeficientes Boolean  @default(false)
-  atualizadoEm    DateTime @updatedAt
-
-  // Relacionamentos
-  motorista PerfilMotorista @relation(fields: [motoristaId], references: [id], onDelete: Cascade)
-  corridas  Corrida[]
-  propostas PropostaSolicitacao[]
-
-  @@map("veiculos")
-}
-
-// Tabela principal de corridas
-model Corrida {
-  id               String        @id @default(cuid())
-  motoristaId      String
-  veiculoId        String
-  origem           String
-  destino          String
-  latitudeOrigem   Float?
-  longitudeOrigem  Float?
-  latitudeDestino  Float?
-  longitudeDestino Float?
-  dataHoraSaida    DateTime
-  dataHoraChegada  DateTime?
-  numeroVagas      Int
-  vagasOcupadas    Int           @default(0)
-  preco            Float?
-  observacoes      String?
-  status           StatusCorrida @default(AGENDADA)
-  tipo             TipoCorrida
-  criadoEm         DateTime      @default(now())
-  atualizadoEm     DateTime      @updatedAt
-
-  // Relacionamentos
-  motorista           PerfilMotorista      @relation(fields: [motoristaId], references: [id])
-  veiculo             Veiculo              @relation(fields: [veiculoId], references: [id])
-  reservas            Reserva[]
-  avaliacoes          Avaliacao[]
-  corridaRecorrente   CorridaRecorrente?   // Para corridas de frequência
-  
-  @@map("corridas")
-}
-
-// Tabela específica para configurações de corridas recorrentes
-model CorridaRecorrente {
-  id           String      @id @default(cuid())
-  corridaId    String      @unique
-  diasSemana   DiaSemana[] // Array de dias da semana
-  dataInicio   DateTime
-  dataFim      DateTime?   // Opcional, pode ser indefinido
-  ativa        Boolean     @default(true)
-  criadoEm     DateTime    @default(now())
-  atualizadoEm DateTime    @updatedAt
-
-  // Relacionamentos
-  corrida Corrida @relation(fields: [corridaId], references: [id], onDelete: Cascade)
-
-  @@map("corridas_recorrentes")
-}
-
-// Tabela de reservas/participações (relacionamento N:M entre usuários e corridas)
-model Reserva {
-  id             String        @id @default(cuid())
-  corridaId      String
-  passageiroId   String
-  status         StatusReserva @default(PENDENTE)
-  numeroAssentos Int           @default(1)
-  observacoes    String?
-  criadoEm       DateTime      @default(now())
-  atualizadoEm   DateTime      @updatedAt
-
-  // Relacionamentos
-  corrida    Corrida @relation(fields: [corridaId], references: [id], onDelete: Cascade)
-  passageiro Usuario @relation("PassageiroReservas", fields: [passageiroId], references: [id], onDelete: Cascade)
-
-  @@unique([corridaId, passageiroId])
-  @@map("reservas")
-}
-
-// Sistema de avaliações bidirecional
-model Avaliacao {
-  id          String   @id @default(cuid())
-  corridaId   String
-  avaliadorId String
-  avaliadoId  String
-  nota        Int      // 1 a 5
-  comentario  String?
-  criadoEm    DateTime @default(now())
-
-  // Relacionamentos
-  corrida   Corrida @relation(fields: [corridaId], references: [id], onDelete: Cascade)
-  avaliador Usuario  @relation("AvaliadorAvaliacoes", fields: [avaliadorId], references: [id], onDelete: Cascade)
-  avaliado  Usuario  @relation("AvaliadoAvaliacoes", fields: [avaliadoId], references: [id], onDelete: Cascade)
-
-  @@unique([corridaId, avaliadorId, avaliadoId])
-  @@map("avaliacoes")
-}
-
-// Tabela para localidades/pontos de referência frequentes
-model Localidade {
-  id          String   @id @default(cuid())
-  nome        String
-  endereco    String
-  cidade      String
-  estado      String
-  cep         String?
-  latitude    Float?
-  longitude   Float?
-  ativa       Boolean  @default(true)
-  criadoEm    DateTime @default(now())
-
-  @@map("localidades")
-}
-
-// Tabela para notificações do sistema
-model Notificacao {
-  id        String   @id @default(cuid())
-  usuarioId String
-  titulo    String
-  mensagem  String
-  lida      Boolean  @default(false)
-  tipo      String   // reserva, avaliacao, sistema, etc.
-  criadoEm  DateTime @default(now())
-
-  @@map("notificacoes")
-}
-
-// Tabela para solicitações de viagem feitas por passageiros
-model SolicitacaoViagem {
-  id               String            @id @default(cuid())
-  passageiroId     String
-  origem           String
-  destino          String
-  latitudeOrigem   Float?
-  longitudeOrigem  Float?
-  latitudeDestino  Float?
-  longitudeDestino Float?
-  dataHoraSaida    DateTime
-  numeroPassageiros Int              @default(1)
-  precoMaximo      Float?
-  descricao        String?
-  status           StatusSolicitacao @default(ABERTA)
-  dataExpiracao    DateTime?         // Opcional, para expirar solicitações antigas
-  criadoEm         DateTime          @default(now())
-  atualizadoEm     DateTime          @updatedAt
-
-  // Relacionamentos
-  passageiro Usuario                      @relation("PassageiroSolicitacoes", fields: [passageiroId], references: [id], onDelete: Cascade)
-  propostas  PropostaSolicitacao[]
-
-  @@map("solicitacoes_viagem")
-}
-
-// Tabela para propostas dos motoristas às solicitações
-model PropostaSolicitacao {
-  id             String   @id @default(cuid())
-  solicitacaoId  String
-  motoristaId    String
-  veiculoId      String
-  precoOfertado  Float?
-  observacoes    String?
-  aceita         Boolean? // null = pendente, true = aceita, false = recusada
-  criadoEm       DateTime @default(now())
-  atualizadoEm   DateTime @updatedAt
-
-  // Relacionamentos
-  solicitacao SolicitacaoViagem @relation(fields: [solicitacaoId], references: [id], onDelete: Cascade)
-  motorista   PerfilMotorista   @relation(fields: [motoristaId], references: [id], onDelete: Cascade)
-  veiculo     Veiculo           @relation(fields: [veiculoId], references: [id])
-
-  @@unique([solicitacaoId, motoristaId])
-  @@map("propostas_solicitacao")
-} 

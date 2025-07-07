@@ -1,9 +1,16 @@
 import '@fastify/jwt'
 
 declare module '@fastify/jwt' {
-  export interface FastifyJWT {
+  interface FastifyJWT {
+    payload: {
+      id_usuario: string
+      email: string
+      tipo: string
+    }
     user: {
-      id: string
+      id_usuario: string
+      email: string
+      tipo: string
     }
   }
 }
