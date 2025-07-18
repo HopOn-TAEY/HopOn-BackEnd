@@ -10,6 +10,8 @@ export async function perfil(request: FastifyRequest, reply: FastifyReply) {
     });
 
     const { id: usuarioId } = paramsSchema.parse(request.params);
+    
+    console.log('Buscando perfil para usuário ID:', usuarioId);
 
     // Buscar o usuário com informações relacionadas
     const usuario = await prisma.usuario.findUnique({
@@ -100,8 +102,11 @@ export async function perfil(request: FastifyRequest, reply: FastifyReply) {
     });
 
     if (!usuario) {
+      console.log('Usuário não encontrado para ID:', usuarioId);
       return reply.status(404).send({ error: "Usuário não encontrado" });
     }
+    
+    console.log('Usuário encontrado:', usuario.nome, 'Tipo:', usuario.tipo);
 
     // Calcular idade
     const hoje = new Date();
@@ -228,4 +233,62 @@ export async function perfil(request: FastifyRequest, reply: FastifyReply) {
 
     return reply.status(500).send({ error: "Erro interno do servidor" });
   }
+}
+
+// Handler para corridas finalizadas do usuário
+import { onRequest } from "../auth/onRequest";
+
+export async function corridasFinalizadas(request: FastifyRequest, reply: FastifyReply) {
+  const userId = request.user.id_usuario;
+
+  // Buscar reservas do usuário onde a corrida está finalizada
+  const reservas = await prisma.reserva.findMany({
+    where: {
+      passageiroId: userId,
+      corrida: {
+        status: "FINALIZADA"
+      }
+    },
+    include: {
+      corrida: {
+        include: {
+          motorista: {
+            include: {
+              usuario: true
+            }
+          },
+          veiculo: true
+        }
+      }
+    },
+    orderBy: {
+      criadoEm: 'desc'
+    }
+  });
+
+  // Mapear resposta
+  const corridas = reservas.map(reserva => ({
+    id: reserva.corrida.id,
+    origem: reserva.corrida.origem,
+    destino: reserva.corrida.destino,
+    dataHoraSaida: reserva.corrida.dataHoraSaida,
+    dataHoraChegada: reserva.corrida.dataHoraChegada,
+    status: reserva.corrida.status,
+    motorista: {
+      id: reserva.corrida.motorista.usuario.id,
+      nome: reserva.corrida.motorista.usuario.nome,
+      email: reserva.corrida.motorista.usuario.email
+    },
+    veiculo: reserva.corrida.veiculo ? {
+      id: reserva.corrida.veiculo.id,
+      placa: reserva.corrida.veiculo.placa,
+      marca: reserva.corrida.veiculo.marca,
+      modelo: reserva.corrida.veiculo.modelo
+    } : null,
+    numeroAssentos: reserva.numeroAssentos,
+    observacoes: reserva.observacoes,
+    criadoEm: reserva.criadoEm
+  }));
+
+  return reply.status(200).send({ corridasFinalizadas: corridas });
 }

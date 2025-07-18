@@ -37,9 +37,27 @@ export async function createMotorista(request: FastifyRequest, reply: FastifyRep
       },
     });
 
+    const token = await reply.jwtSign(
+      {
+        id_usuario: motoristaCriado.id,
+        email: motoristaCriado.email,
+        tipo: motoristaCriado.tipo
+      },
+      {
+        sign: {
+          expiresIn: "7d"
+        },
+      }
+    );
+
     return reply.status(201).send({
-      message: 'Motorista criado com sucesso',
-      motorista: motoristaCriado,
+      token,
+      user: {
+        id: motoristaCriado.id,
+        nome: motoristaCriado.nome,
+        email: motoristaCriado.email,
+        tipoUsuario: motoristaCriado.tipo.toLowerCase()
+      }
     });
   } catch (error) {
     console.error(error);

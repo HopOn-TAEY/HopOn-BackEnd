@@ -203,6 +203,7 @@ model Notificacao {
   mensagem  String
   lida      Boolean  @default(false)
   tipo      String
+  corridaId String?
   criadoEm  DateTime @default(now())
 
   @@map("notificacoes")

@@ -36,16 +36,32 @@ export async function criarCorrida(request: FastifyRequest, reply: FastifyReply)
   });
 
   try {
-    const dados = criarCorridaSchema.parse(request.body);
+    const body = request.body as any;
+    console.log('Dados recebidos no backend:', body);
+    console.log('Tipo do veiculoId recebido:', typeof body.veiculoId);
+    console.log('VeiculoId recebido:', body.veiculoId);
+    
+    const dados = criarCorridaSchema.parse(body);
+    console.log('Dados validados:', dados);
+    console.log('VeiculoId após validação:', dados.veiculoId);
+
+    // Verificar se o veiculoId é um CUUID válido
+    if (!dados.veiculoId || typeof dados.veiculoId !== 'string' || dados.veiculoId.trim() === '') {
+      return reply.status(400).send({ error: "ID do veículo inválido" });
+    }
 
     const veiculo = await prisma.veiculo.findFirst({
       where: {
-        id: dados.veiculoId,
+        id: dados.veiculoId.trim(),
         motoristaId: motoristaId
       }
     });
 
+    console.log('Veículo encontrado:', veiculo);
+    
     if (!veiculo) {
+      console.log('Veículo não encontrado para ID:', dados.veiculoId);
+      console.log('Motorista ID:', motoristaId);
       return reply.status(404).send({ error: "Veículo não encontrado ou não pertence ao motorista" });
     }
 
@@ -56,10 +72,20 @@ export async function criarCorrida(request: FastifyRequest, reply: FastifyReply)
       });
     }
 
+    // Verificar se a data de saída é futura
+    const agora = new Date();
+    if (dados.dataHoraSaida <= agora) {
+      return reply.status(400).send({ 
+        error: "A data e hora de saída deve ser futura" 
+      });
+    }
+
+    console.log('Criando corrida com veiculoId:', dados.veiculoId);
+    
     const corrida = await prisma.corrida.create({
       data: {
         motoristaId: motoristaId,
-        veiculoId: dados.veiculoId,
+        veiculoId: dados.veiculoId.trim(),
         origem: dados.origem,
         destino: dados.destino,
         latitudeOrigem: dados.latitudeOrigem,
@@ -96,6 +122,8 @@ export async function criarCorrida(request: FastifyRequest, reply: FastifyReply)
       }
     });
 
+    console.log('Corrida criada com sucesso:', corrida.id);
+    
     return reply.status(201).send({
       message: "Corrida criada com sucesso",
       corrida: {

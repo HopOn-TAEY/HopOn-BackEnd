@@ -1,6 +1,7 @@
 import { FastifyRequest, FastifyReply } from "fastify";
 import { prisma } from "../../lib/prisma";
 import { z } from "zod";
+import { notificarPropostaAceita } from "../../lib/notificacoes";
 
 export async function aceitarPropostaCorridaPrivada(request: FastifyRequest, reply: FastifyReply) {
   const userId = request.user.id_usuario;
@@ -94,8 +95,38 @@ export async function aceitarPropostaCorridaPrivada(request: FastifyRequest, rep
           precoOfertado: dados.precoFinal || proposta.precoOfertado,
           observacoes: dados.observacoes || proposta.observacoes,
           atualizadoEm: new Date()
+        },
+        include: {
+          motorista: {
+            include: {
+              usuario: {
+                select: {
+                  id: true,
+                  nome: true,
+                  email: true
+                }
+              }
+            }
+          },
+          solicitacao: {
+            include: {
+              passageiro: {
+                select: {
+                  id: true,
+                  nome: true,
+                  email: true
+                }
+              }
+            }
+          }
         }
       });
+
+      // Notificar o passageiro sobre a proposta aceita
+      await notificarPropostaAceita(
+        propostaAtualizada.solicitacao.passageiro.id,
+        propostaAtualizada.motorista.usuario.nome
+      );
 
       // Atualizar o status da solicitação para ACEITA
       await tx.solicitacaoViagem.update({

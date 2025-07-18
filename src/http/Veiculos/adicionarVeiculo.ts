@@ -131,4 +131,4 @@ export async function adicionarVeiculo(request: FastifyRequest, reply: FastifyRe
 
     return reply.status(500).send({ error: "Erro interno do servidor" });
   }
-} 
+}

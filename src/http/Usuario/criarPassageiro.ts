@@ -28,9 +28,27 @@ export async function createPassageiro(request: FastifyRequest, reply: FastifyRe
       },
     });
 
+    const token = await reply.jwtSign(
+      {
+        id_usuario: passageiroCriado.id,
+        email: passageiroCriado.email,
+        tipo: passageiroCriado.tipo
+      },
+      {
+        sign: {
+          expiresIn: "7d"
+        },
+      }
+    );
+
     return reply.status(201).send({
-      message: 'Passageiro criado com sucesso',
-      passageiroCriado
+      token,
+      user: {
+        id: passageiroCriado.id,
+        nome: passageiroCriado.nome,
+        email: passageiroCriado.email,
+        tipoUsuario: passageiroCriado.tipo.toLowerCase()
+      }
     });
   } catch (error: any) {
     console.error(error);

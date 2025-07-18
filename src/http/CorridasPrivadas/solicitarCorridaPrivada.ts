@@ -1,14 +1,21 @@
 import { FastifyRequest, FastifyReply } from "fastify";
 import { prisma } from "../../lib/prisma";
 import { z } from "zod";
+import { notificarSolicitacaoCorridaPrivada } from "../../lib/notificacoes";
 
 export async function solicitarCorridaPrivada(request: FastifyRequest, reply: FastifyReply) {
   const userId = request.user.id_usuario;
+  
+  console.log('User ID from JWT:', userId);
+  console.log('User data from JWT:', request.user);
   
   const usuario = await prisma.usuario.findUnique({
     where: { id: userId },
     include: { perfilMotorista: true }
   });
+
+  console.log('Usuario encontrado:', usuario);
+  console.log('Tipo do usuário:', usuario?.tipo);
 
   if (!usuario || usuario.tipo !== "PASSAGEIRO") {
     return reply.status(403).send({ error: "Apenas passageiros podem solicitar corridas privadas" });
@@ -69,6 +76,14 @@ export async function solicitarCorridaPrivada(request: FastifyRequest, reply: Fa
     if (dados.numeroVagas > veiculo.capacidade) {
       return reply.status(400).send({ 
         error: `Número de vagas (${dados.numeroVagas}) excede a capacidade do veículo (${veiculo.capacidade})` 
+      });
+    }
+
+    // Verificar se a data de saída é futura
+    const agora = new Date();
+    if (dados.dataHoraSaida <= agora) {
+      return reply.status(400).send({ 
+        error: "A data e hora de saída deve ser futura" 
       });
     }
 
@@ -148,6 +163,14 @@ export async function solicitarCorridaPrivada(request: FastifyRequest, reply: Fa
         }
       }
     });
+
+    // Notificar o motorista sobre a nova solicitação
+    await notificarSolicitacaoCorridaPrivada(
+      dados.motoristaId,
+      solicitacao.passageiro.nome,
+      dados.origem,
+      dados.destino
+    );
 
     return reply.status(201).send({
       message: "Solicitação de corrida privada criada com sucesso",

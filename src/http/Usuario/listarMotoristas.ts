@@ -197,6 +197,7 @@ export async function listarMotoristas(request: FastifyRequest, reply: FastifyRe
 
       return {
         id: motorista.usuario.id,
+        perfilMotoristaId: motorista.id, // <-- Adiciona o id do perfil do motorista
         nome: motorista.usuario.nome,
         email: motorista.usuario.email,
         telefone: motorista.usuario.telefone,

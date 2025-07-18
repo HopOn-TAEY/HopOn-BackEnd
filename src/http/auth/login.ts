@@ -12,13 +12,13 @@ export async function login(request: FastifyRequest, reply: FastifyReply) {
     const { email, senha } = bodySchema.parse(request.body);
 
     const usuario = await prisma.usuario.findUnique({
-            where: {
-                email,
-            }
-        })
+      where: { email },
+      include: { perfilMotorista: true }
+    });
+    console.log('Usuário retornado do Prisma:', usuario);
 
       if (!usuario) {
-          return reply.status(400).send({ message: "User with same e-mail does not exist." });
+          return reply.status(400).send({ message: "não existe usuário com o mesmo email" });
       }
 
       const isPasswordValid = await compare(senha, usuario.senha)
@@ -40,5 +40,16 @@ export async function login(request: FastifyRequest, reply: FastifyReply) {
       }
     );
 
-    return reply.status(200).send({token, usuario})
+    return reply.status(200).send({
+      token,
+      user: {
+        id: usuario.id,
+        nome: usuario.nome,
+        email: usuario.email,
+        tipo: usuario.tipo.toLowerCase(),
+        telefone: usuario.telefone,
+        cnh: usuario.perfilMotorista?.cnh,
+        dataNascimento: usuario.dataNasc,
+      }
+    })
 }

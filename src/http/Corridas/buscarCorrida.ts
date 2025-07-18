@@ -153,8 +153,8 @@ export async function buscarCorrida(request: FastifyRequest, reply: FastifyReply
         telefone: corrida.motorista.usuario.telefone,
         dataNasc: corrida.motorista.usuario.dataNasc,
         cnh: corrida.motorista.cnh,
-        avaliacaoMedia: corrida.motorista.avaliacaoMedia,
-        totalAvaliacoes: corrida.motorista.totalAvaliacoes,
+        avaliacaoMedia: mediaAvaliacoesMotorista,
+        totalAvaliacoes: avaliacoesMotorista.length,
         membroDesde: corrida.motorista.usuario.criadoEm
       },
       
