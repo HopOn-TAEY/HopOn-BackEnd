@@ -40,6 +40,7 @@ import { detalharCorrida } from "./Corridas/detalharCorrida";
 import { detalharCorridaPrivada } from "./CorridasPrivadas/detalharCorridaPrivada";
 import { listarCorridasFinalizadasUsuario } from "./Corridas/listarCorridasFinalizadasUsuario";
 import { finalizarCorridaPrivada } from "./CorridasPrivadas/finalizarCorridaPrivada";
+import { cancelarCorridaPrivada } from "./CorridasPrivadas/cancelarCorridaPrivada";
 
 export async function routes(app: FastifyInstance) {
 
@@ -96,4 +97,5 @@ export async function routes(app: FastifyInstance) {
   app.post("/avaliar-motorista", { preHandler: onRequest }, avaliarMotorista);
   app.post("/avaliar/:id", { preHandler: onRequest }, avaliarMotorista);
   app.put("/corridas-privadas/:id/finalizar", { preHandler: onRequest }, finalizarCorridaPrivada);
+  app.put("/corridas-privadas/:id/cancelar", { preHandler: onRequest }, cancelarCorridaPrivada);
 }

@@ -6,13 +6,13 @@ import { notificarReservaSolicitada } from "../../lib/notificacoes";
 export async function criarReserva(request: FastifyRequest, reply: FastifyReply) {
   const userId = request.user.id_usuario;
 
-  // Buscar usuário e validar tipo
+  // Buscar usuário
   const usuario = await prisma.usuario.findUnique({
     where: { id: userId }
   });
 
-  if (!usuario || usuario.tipo !== "PASSAGEIRO") {
-    return reply.status(403).send({ error: "Apenas passageiros podem criar reservas" });
+  if (!usuario) {
+    return reply.status(403).send({ error: "Usuário não encontrado" });
   }
 
   // Schema de validação
@@ -35,7 +35,12 @@ export async function criarReserva(request: FastifyRequest, reply: FastifyReply)
       return reply.status(404).send({ error: "Corrida não encontrada" });
     }
 
-    // Verificar se já existe reserva para esse passageiro nessa corrida
+    // Impedir que o motorista da corrida faça reserva na própria corrida
+    if (corrida.motoristaId === userId) {
+      return reply.status(403).send({ error: "O motorista não pode reservar sua própria corrida" });
+    }
+
+    // Verificar se já existe reserva para esse usuário nessa corrida
     const reservaExistente = await prisma.reserva.findUnique({
       where: {
         corridaId_passageiroId: {
